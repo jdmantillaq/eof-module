@@ -142,3 +142,66 @@ def project_data(data, vec_prop):
     eof = eof.reshape(ntime, nlat, nlon)
     
     return eof
+
+def fourier_bandpass_filter(series, low_period, high_period):
+    import numpy as np
+    '''
+    Apply a bandpass filter to a time series using the Fourier transform.
+
+    Parameters:
+        series (array-like): Input time series data.
+        low_period (float): Lower bound of the period (inclusive).
+        high_period (float): Upper bound of the period (inclusive).
+
+    Returns:
+        np.ndarray: Filtered time series.
+    '''
+    sampling_interval = 1
+    mean_value = np.mean(series)
+    detrended_series = series - mean_value
+
+    freqs = np.fft.fftfreq(len(detrended_series), sampling_interval)
+    periods = 1 / freqs
+
+    # Mask frequencies outside the desired period band
+    filter_mask = (np.abs(periods) >= low_period) & (np.abs(periods) <= high_period)
+
+    fourier_coeffs = np.fft.fft(detrended_series)
+    fourier_coeffs[~filter_mask] = 0
+
+    filtered_series = np.fft.ifft(fourier_coeffs).real
+    filtered_series += mean_value
+
+    return filtered_series
+
+
+def compute_fourier_spectrum(time_series):
+    import numpy as np
+    """
+    Computes the normalized power spectrum (percentage of variance) of a
+    time series using the Fourier transform.
+
+    Args:
+        time_series (array-like): The input time series data.
+
+    Returns:
+        tuple: (periods, percent_variance) where
+            periods (np.ndarray): Array of periods corresponding to the Fourier
+                frequencies.
+            percent_variance (np.ndarray): Percentage of variance explained by
+                each frequency component.
+    """
+    sampling_interval = 1
+    mean_value = np.mean(time_series)
+    detrended_series = time_series - mean_value
+
+    freqs = np.fft.fftfreq(len(detrended_series), sampling_interval)
+    periods = 1 / freqs
+
+    fourier_transform = np.fft.fft(detrended_series)
+    amplitude = np.abs(fourier_transform)
+    power = amplitude ** 2
+    normalized_power = (power / np.sum(power)) * np.var(detrended_series)
+    percent_variance = (normalized_power / np.var(detrended_series)) * 100.0
+
+    return periods, percent_variance
