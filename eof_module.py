@@ -205,3 +205,34 @@ def compute_fourier_spectrum(time_series):
     percent_variance = (normalized_power / np.var(detrended_series)) * 100.0
 
     return periods, percent_variance
+
+def plot_fourier_spectra(serie):
+    """
+    Plots the Fourier spectra of a time series.
+
+    Args:
+      series (array of int) - contains the measurements for each time step
+    """
+    serie = serie - serie.mean()
+    
+    # Compute the corresponding frequencies
+    freq = np.fft.fftfreq(len(serie), 1)
+    period = 1/freq
+    fourier  = np.fft.fft(serie)
+    amplitud = np.abs(fourier)
+    power    = (amplitud ** 2)
+    power_1    = (power/np.sum(power)) *  np.var(serie)
+    porcen_var = power_1 / np.var(serie) * 100.
+    
+    
+    
+    # Plot the magnitude of the FFT
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.plot(period,porcen_var*2, color = 'k')
+    ax.set_xscale('log', base=10)
+    plt.xlabel('Period')
+    plt.ylabel('Magnitude [variance]')
+    plt.title('Fourier Spectra')
+    plt.grid(True)
+    plt.show()
